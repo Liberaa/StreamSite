@@ -1,0 +1,15 @@
+<a class="stream-card" href="/<%= channel.username %>" style="--accent: <%= channel.accentColor %>; --on-accent: <%= onAccent(channel.accentColor) %>">
+  <div class="stream-card__thumb">
+    <span class="stream-card__monogram" aria-hidden="true"><%= initials(channel.displayName) %></span>
+    <span class="badge badge--live">Live</span>
+    <span class="stream-card__viewers"><%= compactNumber(channel.viewerCount) %> watching</span>
+  </div>
+  <div class="stream-card__body">
+    <%- include('avatar', { person: channel, size: 'md' }) %>
+    <div class="stream-card__text">
+      <h3 class="stream-card__title"><%= channel.stream.title || `${channel.displayName} is live` %></h3>
+      <p class="stream-card__name"><%= channel.displayName %></p>
+      <p class="stream-card__category"><%= categoryName(channel.stream.category) %></p>
+    </div>
+  </div>
+</a>

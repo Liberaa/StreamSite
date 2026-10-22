@@ -1,0 +1,27 @@
+<header class="topbar">
+  <a class="brand" href="/">
+    <svg class="brand__logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M12.5 10.5v11l9-5.5z" fill="#fff"/></svg>
+    <span><%= appName %></span>
+  </a>
+  <nav class="topbar__links" aria-label="Main">
+    <a href="/">Browse</a>
+  </nav>
+  <div class="topbar__actions">
+    <% if (currentUser) { %>
+      <a class="btn btn--secondary btn--small" href="/dashboard">
+        <% if (currentUser.stream && currentUser.stream.isLive) { %><span class="dot dot--live" aria-hidden="true"></span><% } %>
+        Dashboard
+      </a>
+      <a class="topbar__profile" href="/<%= currentUser.username %>" title="Your channel">
+        <%- include('avatar', { person: currentUser, size: 'sm' }) %>
+        <span class="visually-hidden">Your channel</span>
+      </a>
+      <form method="post" action="/logout">
+        <button class="btn btn--ghost btn--small" type="submit">Log out</button>
+      </form>
+    <% } else { %>
+      <a class="btn btn--ghost btn--small" href="/login">Log in</a>
+      <a class="btn btn--primary btn--small" href="/register">Start streaming</a>
+    <% } %>
+  </div>
+</header>

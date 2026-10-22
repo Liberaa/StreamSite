@@ -1,0 +1,112 @@
+<%- include('../partials/head') %>
+<% const live = user.stream.isLive; %>
+
+<div class="dashboard" style="--accent: <%= user.accentColor %>; --on-accent: <%= onAccent(user.accentColor) %>">
+  <header class="dashboard__header">
+    <div>
+      <p class="eyebrow">Creator dashboard</p>
+      <h1>Hi, <%= user.displayName %></h1>
+    </div>
+    <a class="btn btn--secondary" href="/<%= user.username %>">View my channel</a>
+  </header>
+
+  <section class="card status-card" data-dashboard-status data-channel="<%= user.username %>" data-live="<%= live ? 'true' : 'false' %>">
+    <div class="status-card__state">
+      <span class="status-pill" data-status-pill><%= live ? 'Live' : 'Offline' %></span>
+      <p data-status-text><%= live ? 'You are live. Viewers can watch you right now.' : 'You are offline. Start streaming in OBS to go live.' %></p>
+    </div>
+    <dl class="status-card__stats">
+      <div><dt>Viewers</dt><dd data-viewers><%= viewerCount %></dd></div>
+      <div><dt>Followers</dt><dd><%= compactNumber(user.followerCount) %></dd></div>
+    </dl>
+  </section>
+
+  <div class="dashboard__grid">
+    <section class="card" aria-labelledby="setup-heading">
+      <h2 id="setup-heading">Stream setup</h2>
+      <p class="card__lead">In OBS Studio, open <strong>Settings &rarr; Stream</strong>, set Service to <strong>Custom...</strong> and paste these two values.</p>
+      <div class="field">
+        <label for="ingest-url">Server</label>
+        <div class="input-row">
+          <input id="ingest-url" value="<%= ingestUrl %>" readonly>
+          <button class="btn btn--secondary" type="button" data-copy="ingest-url">Copy</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="stream-key">Stream key</label>
+        <div class="input-row">
+          <input id="stream-key" type="password" value="<%= obsStreamKey %>" readonly autocomplete="off" spellcheck="false">
+          <button class="btn btn--secondary" type="button" data-reveal="stream-key">Show</button>
+          <button class="btn btn--secondary" type="button" data-copy="stream-key">Copy</button>
+        </div>
+        <p class="field__hint">Keep this secret. Anyone with your stream key can stream to your channel.</p>
+      </div>
+      <form method="post" action="/dashboard/stream-key"
+            data-confirm="Create a new stream key? The current key stops working right away and a running stream will end.">
+        <button class="btn btn--danger btn--small" type="submit">Reset stream key</button>
+      </form>
+      <details class="tips">
+        <summary>Recommended OBS settings</summary>
+        <ul>
+          <li>Video encoder: <strong>x264</strong> or a hardware <strong>H.264</strong> encoder. Browsers cannot play HEVC or AV1 from this server.</li>
+          <li>Keyframe interval: <strong>2 s</strong>, so viewers can start watching quickly.</li>
+          <li>Bitrate: <strong>2500 to 6000 Kbps</strong> for 720p to 1080p.</li>
+          <li>Audio: AAC at 160 Kbps, which is the OBS default.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="info-heading">
+      <h2 id="info-heading">Stream info</h2>
+      <p class="card__lead">Shown on your channel and in the Live now list. Changes appear for viewers instantly.</p>
+      <form class="form" method="post" action="/dashboard/stream">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" maxlength="140" value="<%= user.stream.title %>" placeholder="What are you streaming today?">
+        </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" name="category">
+            <% for (const category of categories) { %>
+              <option value="<%= category.id %>" <%= category.id === user.stream.category ? 'selected' : '' %>><%= category.name %></option>
+            <% } %>
+          </select>
+        </div>
+        <button class="btn btn--primary" type="submit">Save stream info</button>
+      </form>
+    </section>
+
+    <section class="card card--wide" aria-labelledby="profile-heading">
+      <h2 id="profile-heading">Profile</h2>
+      <p class="card__lead">This is what viewers see on your channel page.</p>
+      <form class="form" method="post" action="/dashboard/profile">
+        <div class="form__row">
+          <div class="field">
+            <label for="displayName">Display name</label>
+            <input id="displayName" name="displayName" maxlength="40" value="<%= user.displayName %>" required>
+          </div>
+          <div class="field field--color">
+            <label for="accentColor">Channel color</label>
+            <input id="accentColor" name="accentColor" type="color" value="<%= user.accentColor %>">
+          </div>
+        </div>
+        <div class="field">
+          <label for="bio">Bio</label>
+          <textarea id="bio" name="bio" rows="4" maxlength="500" placeholder="Tell viewers who you are and what you stream."><%= user.bio %></textarea>
+        </div>
+        <fieldset class="field">
+          <legend>Links</legend>
+          <% for (let i = 0; i < maxLinks; i++) { const link = user.links[i] || {}; %>
+            <div class="link-row">
+              <input name="linkLabel" maxlength="30" placeholder="Label, e.g. YouTube" value="<%= link.label || '' %>" aria-label="Link <%= i + 1 %> label">
+              <input name="linkUrl" maxlength="300" placeholder="https://..." value="<%= link.url || '' %>" aria-label="Link <%= i + 1 %> address">
+            </div>
+          <% } %>
+        </fieldset>
+        <button class="btn btn--primary" type="submit">Save profile</button>
+      </form>
+    </section>
+  </div>
+</div>
+
+<%- include('../partials/foot', { scripts: ['/socket.io/socket.io.js', '/js/dashboard.js'] }) %>

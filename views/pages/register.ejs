@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+
+<section class="auth">
+  <div class="card auth__card">
+    <h1>Create your channel</h1>
+    <p class="auth__sub">Every account is a channel. Watch, chat and follow, or go live whenever you are ready.</p>
+    <% if (error) { %><p class="form-error" role="alert"><%= error %></p><% } %>
+    <form class="form" method="post" action="/register">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" value="<%= values.username || '' %>"
+               minlength="3" maxlength="25" pattern="[A-Za-z0-9_]{3,25}" required autofocus>
+        <p class="field__hint">Your channel lives at /<strong>username</strong>. 3 to 25 letters, numbers or underscores.</p>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" value="<%= values.email || '' %>" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required>
+        <p class="field__hint">At least 8 characters.</p>
+      </div>
+      <button class="btn btn--primary btn--block" type="submit">Create channel</button>
+    </form>
+    <p class="auth__switch">Already have an account? <a href="/login">Log in</a></p>
+  </div>
+</section>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,9 @@
+  </main>
+  <footer class="site-footer">
+    <p><%= appName %> &middot; A live streaming home for creators.</p>
+  </footer>
+  <% for (const src of (locals.scripts || [])) { %>
+  <script src="<%= src %>" defer></script>
+  <% } %>
+</body>
+</html>

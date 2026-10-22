@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= locals.title ? `${locals.title} | ${appName}` : appName %></title>
+  <meta name="description" content="<%= locals.description || `${appName} is a live streaming home built around creators.` %>">
+  <meta name="theme-color" content="#0e0e12">
+  <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <%- include('nav') %>
+  <% if (flash) { %>
+    <div class="flash flash--<%= flash.type %>" role="status"><%= flash.message %></div>
+  <% } %>
+  <main id="main" class="<%= locals.mainClass || 'page' %>">

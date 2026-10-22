@@ -1,0 +1,13 @@
+<a class="creator-card" href="/<%= creator.username %>" style="--accent: <%= creator.accentColor %>; --on-accent: <%= onAccent(creator.accentColor) %>">
+  <div class="creator-card__banner" aria-hidden="true"></div>
+  <div class="creator-card__content">
+    <%- include('avatar', { person: creator, size: 'lg' }) %>
+    <h3 class="creator-card__name"><%= creator.displayName %></h3>
+    <p class="creator-card__meta">
+      <% if (creator.stream.isLive) { %><span class="badge badge--live">Live</span><% } %>
+      <span><%= categoryName(creator.stream.category) %></span>
+    </p>
+    <p class="creator-card__bio"><%= creator.bio || 'No bio yet.' %></p>
+    <p class="creator-card__followers"><strong><%= compactNumber(creator.followerCount) %></strong> <%= plural(creator.followerCount, 'follower') %></p>
+  </div>
+</a>

@@ -1,0 +1,92 @@
+<%- include('../partials/head', {
+  mainClass: 'page page--flush',
+  description: creator.bio || `Watch ${creator.displayName} live on ${appName}.`,
+}) %>
+<% const live = creator.stream.isLive; %>
+
+<div class="channel" style="--accent: <%= creator.accentColor %>; --on-accent: <%= onAccent(creator.accentColor) %>"
+     data-channel="<%= creator.username %>"
+     data-playback-url="<%= playbackUrl %>"
+     data-live="<%= live ? 'true' : 'false' %>"
+     data-started-at="<%= live && creator.stream.startedAt ? creator.stream.startedAt.toISOString() : '' %>">
+
+  <div class="player">
+    <video class="player__video" data-video playsinline muted controls></video>
+
+    <div class="player__offline" data-offline <%= live ? 'hidden' : '' %>>
+      <%- include('../partials/avatar', { person: creator, size: 'xl' }) %>
+      <p class="player__offline-title"><%= creator.displayName %> is offline</p>
+      <p class="player__offline-text">
+        <% if (creator.stream.lastLiveAt) { %>Last live <%= timeAgo(creator.stream.lastLiveAt) %>.<% } else { %>No streams yet.<% } %>
+        This page starts playing as soon as they go live.
+      </p>
+    </div>
+
+    <p class="player__message" data-player-message hidden></p>
+    <button class="player__unmute" type="button" data-unmute hidden>Click to unmute</button>
+  </div>
+
+  <section class="channel-header">
+    <%- include('../partials/avatar', { person: creator, size: 'lg' }) %>
+    <div class="channel-header__text">
+      <div class="channel-header__name-row">
+        <h1 class="channel-header__name"><%= creator.displayName %></h1>
+        <span class="badge badge--live" data-live-only <%= live ? '' : 'hidden' %>>Live</span>
+      </div>
+      <p class="channel-header__title" data-stream-title><%= creator.stream.title || 'No stream title yet' %></p>
+      <p class="channel-header__meta">
+        <span class="chip" data-stream-category><%= categoryName(creator.stream.category) %></span>
+        <span data-live-only <%= live ? '' : 'hidden' %>>
+          <span data-viewers><%= viewerCount %></span> watching &middot; live for <span data-uptime>0:00:00</span>
+        </span>
+      </p>
+    </div>
+    <div class="channel-header__actions">
+      <% if (isOwner) { %>
+        <a class="btn btn--secondary" href="/dashboard">Edit channel</a>
+      <% } else if (currentUser) { %>
+        <form method="post" action="/<%= creator.username %>/<%= isFollowing ? 'unfollow' : 'follow' %>"
+              data-follow-form data-following="<%= isFollowing ? 'true' : 'false' %>">
+          <button class="btn <%= isFollowing ? 'btn--secondary' : 'btn--primary' %>" type="submit"><%= isFollowing ? 'Following' : 'Follow' %></button>
+        </form>
+      <% } else { %>
+        <a class="btn btn--primary" href="/login?next=/<%= creator.username %>">Follow</a>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="channel-about" aria-labelledby="about-heading">
+    <h2 id="about-heading">About <%= creator.displayName %></h2>
+    <p class="channel-about__followers"><strong data-follower-count><%= compactNumber(creator.followerCount) %></strong> <span data-follower-label><%= plural(creator.followerCount, 'follower') %></span></p>
+    <p class="channel-about__bio"><%= creator.bio || `${creator.displayName} has not written a bio yet.` %></p>
+    <% if (creator.links.length) { %>
+      <ul class="channel-about__links">
+        <% for (const link of creator.links) { %>
+          <li><a href="<%= link.url %>" target="_blank" rel="noopener noreferrer nofollow"><%= link.label %></a></li>
+        <% } %>
+      </ul>
+    <% } %>
+    <p class="channel-about__joined">Creator since <%= creator.createdAt.toLocaleDateString('en', { month: 'long', year: 'numeric' }) %></p>
+  </section>
+
+  <aside class="chat" aria-labelledby="chat-heading">
+    <header class="chat__header">
+      <h2 id="chat-heading">Stream chat</h2>
+      <span class="chat__viewers"><span data-viewers><%= viewerCount %></span> here</span>
+    </header>
+    <ol class="chat__messages" data-chat-messages aria-live="polite">
+      <li class="chat__notice">Welcome to the chat. Be kind!</li>
+    </ol>
+    <% if (currentUser) { %>
+      <form class="chat__form" data-chat-form>
+        <label class="visually-hidden" for="chat-input">Send a message</label>
+        <input id="chat-input" name="message" maxlength="300" autocomplete="off" placeholder="Send a message" required>
+        <button class="btn btn--primary" type="submit">Chat</button>
+      </form>
+    <% } else { %>
+      <p class="chat__login"><a href="/login?next=/<%= creator.username %>">Log in</a> or <a href="/register">sign up</a> to chat.</p>
+    <% } %>
+  </aside>
+</div>
+
+<%- include('../partials/foot', { scripts: ['/vendor/mpegts/mpegts.js', '/socket.io/socket.io.js', '/js/channel.js'] }) %>

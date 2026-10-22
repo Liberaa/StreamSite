@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+
+<% if (!currentUser) { %>
+<section class="hero">
+  <p class="eyebrow">Creator-first live streaming</p>
+  <h1>Watch people make things, live.</h1>
+  <p class="hero__lead">Follow artists, musicians, cooks and coders while they create, and chat with them as it happens. Starting your own channel takes a minute. All you need is OBS.</p>
+  <div class="hero__actions">
+    <a class="btn btn--primary" href="/register">Create your channel</a>
+    <a class="btn btn--secondary" href="#creators">Meet the creators</a>
+  </div>
+</section>
+<% } %>
+
+<section class="section" aria-labelledby="live-heading">
+  <div class="section__header">
+    <h2 id="live-heading"><span class="dot dot--live" aria-hidden="true"></span> Live now</h2>
+    <% if (liveChannels.length) { %><span class="section__count"><%= liveChannels.length %> live</span><% } %>
+  </div>
+  <% if (liveChannels.length) { %>
+    <div class="grid grid--streams">
+      <% for (const channel of liveChannels) { %><%- include('../partials/stream-card', { channel }) %><% } %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <h3>Nobody is live right now</h3>
+      <p>Be the first. Set up your stream in the dashboard, then press <strong>Start Streaming</strong> in OBS.</p>
+      <a class="btn btn--primary" href="<%= currentUser ? '/dashboard' : '/register' %>">Go live</a>
+    </div>
+  <% } %>
+</section>
+
+<section class="section" id="creators" aria-labelledby="creators-heading">
+  <div class="section__header">
+    <h2 id="creators-heading">Meet the creators</h2>
+  </div>
+  <% if (creators.length) { %>
+    <div class="grid grid--creators">
+      <% for (const creator of creators) { %><%- include('../partials/creator-card', { creator }) %><% } %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <h3>No creators yet</h3>
+      <p>Sign up to create the very first channel.<% if (!isProduction) { %> Or run <code>npm run seed</code> to add demo creators.<% } %></p>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/foot') %>

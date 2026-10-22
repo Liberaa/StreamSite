@@ -1,0 +1,24 @@
+<%- include('../partials/head') %>
+
+<section class="auth">
+  <div class="card auth__card">
+    <h1>Welcome back</h1>
+    <p class="auth__sub">Log in to chat, follow creators and go live.</p>
+    <% if (error) { %><p class="form-error" role="alert"><%= error %></p><% } %>
+    <form class="form" method="post" action="/login">
+      <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+      <div class="field">
+        <label for="identifier">Username or email</label>
+        <input id="identifier" name="identifier" autocomplete="username" value="<%= values.identifier || '' %>" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn--primary btn--block" type="submit">Log in</button>
+    </form>
+    <p class="auth__switch">New here? <a href="/register">Create your channel</a></p>
+  </div>
+</section>
+
+<%- include('../partials/foot') %>
