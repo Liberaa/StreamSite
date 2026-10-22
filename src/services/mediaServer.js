@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import path from 'node:path';
 import NodeMediaServer from 'node-media-server';
 import nmsLogger from 'node-media-server/src/core/logger.js';
@@ -17,6 +18,39 @@ const publishers = new Map();
 
 /** One queue per channel, so database updates for a channel never overlap. */
 const syncQueues = new Map();
+
+/**
+ * Single-use tokens for the server's own ffmpeg, which relays browser streams
+ * (sockets/ingest.js). They keep the creator's real stream key off the ffmpeg
+ * command line, where other users of the machine could read it.
+ * @type {Map<string, { username: string, expiresAt: number }>}
+ */
+const publishTokens = new Map();
+const PUBLISH_TOKEN_TTL_MS = 30 * 1000;
+
+/** A token that lets a local process publish to this channel once, within 30 seconds. */
+export function createPublishToken(username) {
+  const now = Date.now();
+  for (const [token, entry] of publishTokens) {
+    if (entry.expiresAt < now) publishTokens.delete(token);
+  }
+  const token = crypto.randomBytes(24).toString('base64url');
+  publishTokens.set(token, { username, expiresAt: now + PUBLISH_TOKEN_TTL_MS });
+  return token;
+}
+
+/**
+ * Ends a channel's stream right away, skipping the 30 second reconnect window.
+ * Used when a creator resets their key or presses "End stream" in the browser.
+ */
+export function endStream(username) {
+  for (const [id, publisher] of publishers) {
+    if (publisher.username !== username) continue;
+    publishers.delete(id);
+    publisher.session.close();
+  }
+  return syncLiveState(username);
+}
 
 /**
  * Starts the RTMP ingest server (OBS connects here) and the HTTP-FLV server
@@ -57,19 +91,12 @@ export async function startMediaServer() {
   });
 
   // Resetting a stream key ends any stream that still uses the old key.
-  streamEvents.on('keyRevoked', ({ username }) => {
-    for (const [id, publisher] of publishers) {
-      if (publisher.username !== username) continue;
-      publishers.delete(id);
-      publisher.session.close();
-    }
-    syncLiveState(username);
-  });
+  streamEvents.on('keyRevoked', ({ username }) => endStream(username));
 
   await nms.run();
   console.log(
-    `[media] OBS ingest on rtmp://localhost:${config.media.rtmpPort}/${STREAM_APP}, ` +
-      `playback on http://localhost:${config.media.httpPort}`,
+    `[media] OBS and phone apps stream to rtmp://localhost:${config.media.rtmpPort}/${STREAM_APP} ` +
+      `(viewers get video through the website)`,
   );
   return nms;
 }
@@ -102,21 +129,26 @@ function guardMediaHttpServer(server) {
 
 async function authorizePublisher(session) {
   // OBS sends the "Stream Key" field as the stream name: "<username>?key=<secret>".
+  // The server's own ffmpeg (browser streams) sends "<username>?token=<one-time token>".
   const username = session.streamName;
-  const key = session.streamQuery?.key;
+  const { key, token } = session.streamQuery ?? {};
   const validPath =
     session.streamApp === STREAM_APP && typeof username === 'string' && USERNAME_PATTERN.test(username);
-  if (!validPath || typeof key !== 'string') {
+  if (!validPath || (typeof key !== 'string' && typeof token !== 'string')) {
     return reject(session, `expected rtmp://<host>/${STREAM_APP} with a stream key like "<username>?key=<secret>"`);
   }
 
-  const user = await User.findOne({ username }).select('+streamKey').lean();
-  if (!user || !streamKeysMatch(user.streamKey, key)) {
-    return reject(session, 'wrong stream key');
-  }
+  const allowed = typeof token === 'string'
+    ? usePublishToken(token, username, session)
+    : await streamKeyMatches(username, key);
+  if (!allowed) return reject(session, 'wrong stream key');
 
-  // node-media-server may have refused or lost the connection while we were
-  // checking, for example because this channel already has a publisher.
+  // node-media-server finishes setting up the session after this event
+  // handler returns, so wait a tick before looking at the session state.
+  await new Promise((resolve) => setImmediate(resolve));
+
+  // node-media-server may have refused or lost the connection meanwhile,
+  // for example because this channel already has a publisher.
   if (!session.isPublisher || session.endTime) return;
 
   // A reconnect within the 30 second grace window replaces the old session.
@@ -125,6 +157,19 @@ async function authorizePublisher(session) {
   }
   publishers.set(session.id, { username, session });
   await syncLiveState(username);
+}
+
+async function streamKeyMatches(username, key) {
+  const user = await User.findOne({ username }).select('+streamKey').lean();
+  return Boolean(user) && streamKeysMatch(user.streamKey, key);
+}
+
+function usePublishToken(token, username, session) {
+  const entry = publishTokens.get(token);
+  publishTokens.delete(token); // Single use, valid or not.
+  const address = String(session.ip).replace(/:\d+$/, '');
+  const fromThisMachine = /^(127\.|::1$|::ffff:127\.)/.test(address);
+  return Boolean(entry) && entry.username === username && entry.expiresAt >= Date.now() && fromThisMachine;
 }
 
 function reject(session, reason) {

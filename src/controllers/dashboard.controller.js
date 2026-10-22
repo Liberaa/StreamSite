@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import { CATEGORIES } from '../config/categories.js';
 import { setFlash } from '../middleware/flash.js';
 import { MAX_LINKS, User } from '../models/User.js';
-import { ingestUrl } from '../services/mediaUrls.js';
+import { ffmpegPath } from '../services/ffmpeg.js';
+import { ingestUrl, phoneIngestUrl, phoneSiteUrl } from '../services/mediaUrls.js';
 import { getViewerCount } from '../services/presence.js';
 import { streamEvents, streamSummary } from '../services/streamEvents.js';
 import { firstValidationMessage, formList, formText } from '../utils/forms.js';
@@ -16,7 +17,21 @@ export async function show(req, res) {
     categories: CATEGORIES,
     maxLinks: MAX_LINKS,
     ingestUrl: ingestUrl(req),
+    phoneIngestUrl: phoneIngestUrl(req),
+    phoneSiteUrl: phoneSiteUrl(),
     obsStreamKey: obsStreamKey(user.username, user.streamKey),
+    viewerCount: getViewerCount(user.username),
+  });
+}
+
+/** "Go live from this device": camera streaming in the browser, made for phones. */
+export async function showBroadcast(req, res) {
+  const user = await User.findById(req.user._id).lean();
+  res.render('pages/broadcast', {
+    title: 'Go live',
+    user,
+    available: Boolean(ffmpegPath),
+    phoneSiteUrl: phoneSiteUrl(),
     viewerCount: getViewerCount(user.username),
   });
 }

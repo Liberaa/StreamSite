@@ -24,6 +24,22 @@ function readPort(name, fallback) {
   return port;
 }
 
+// Like readPort, but an empty value turns the feature off (returns 0).
+function readOptionalPort(name, fallback) {
+  if (env[name] === undefined) return fallback;
+  return env[name] === '' ? 0 : readPort(name, fallback);
+}
+
+function readPositiveInteger(name, fallback) {
+  const value = env[name];
+  if (value === undefined || value === '') return fallback;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 1) {
+    throw new Error(`${name} must be a whole number of 1 or more, got "${value}".`);
+  }
+  return number;
+}
+
 function readUrl(name) {
   const value = env[name];
   if (!value) return '';
@@ -51,6 +67,13 @@ export const config = Object.freeze({
   mongoUri: env.MONGODB_URI || 'mongodb://127.0.0.1:27017/streamsite',
   sessionSecret: readSessionSecret(),
   trustProxy: env.TRUST_PROXY === 'true',
+  // Development only: an https server for phones on the same Wi-Fi, because
+  // browsers only allow the camera on https (or on localhost).
+  devHttpsPort: isProduction ? 0 : readOptionalPort('DEV_HTTPS_PORT', 3443),
+  // Browser streaming (camera on the creator dashboard) needs ffmpeg.
+  // The ffmpeg-static package provides it; FFMPEG_PATH can point to another one.
+  ffmpegPath: env.FFMPEG_PATH || '',
+  browserStreamLimit: readPositiveInteger('BROWSER_STREAM_LIMIT', 4),
   media: Object.freeze({
     bind: env.MEDIA_BIND || '0.0.0.0',
     rtmpPort: readPort('RTMP_PORT', 1935),

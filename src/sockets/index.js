@@ -3,6 +3,7 @@ import { User, USERNAME_PATTERN } from '../models/User.js';
 import { setViewerCount } from '../services/presence.js';
 import { streamEvents, streamSummary } from '../services/streamEvents.js';
 import { originMatchesHost } from '../utils/http.js';
+import { attachToServers } from './attach.js';
 import { registerChatHandlers } from './chat.js';
 import { channelRooms, chatRoom, statusRoom } from './rooms.js';
 
@@ -13,8 +14,9 @@ const pendingViewerCounts = new Map();
  * Real-time layer: chat, viewer counts and live/offline updates.
  * Browsers connect with io({ auth: { channel: '<username>' } }).
  */
-export function createSocketServer(httpServer, sessionMiddleware) {
-  const io = new Server(httpServer, {
+export function createSocketServer(servers, sessionMiddleware) {
+  const io = new Server({
+    serveClient: false, // The browser script is a static file: /vendor/socket.io/
     maxHttpBufferSize: 10_000,
     // Only pages from this site may connect (blocks cross-site WebSocket hijacking).
     allowRequest: (req, callback) => {
@@ -22,6 +24,7 @@ export function createSocketServer(httpServer, sessionMiddleware) {
       callback(null, !origin || originMatchesHost(origin, host));
     },
   });
+  attachToServers(io, servers);
 
   // Reuse the Express session, so sockets know who is logged in.
   io.engine.use(sessionMiddleware);

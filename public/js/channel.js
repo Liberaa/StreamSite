@@ -28,7 +28,7 @@
   function startPlayer() {
     if (player || !isLive) return;
     if (!canPlayLive) {
-      showMessage('This browser cannot play live streams. Try Chrome, Edge or Firefox.');
+      showMessage('This browser cannot play live video. On iPhone, update to iOS 17.1 or newer. Elsewhere, try Chrome, Edge, Firefox or Safari.');
       return;
     }
     player = mpegts.createPlayer(

@@ -68,7 +68,7 @@
     pill.textContent = live ? 'Live' : 'Offline';
     text.textContent = live
       ? 'You are live. Viewers can watch you right now.'
-      : 'You are offline. Start streaming in OBS to go live.';
+      : 'You are offline. Go live with your camera, OBS or a phone app.';
   }
 
   const socket = window.io({ auth: { channel: status.dataset.channel, mode: 'status' } });

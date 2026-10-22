@@ -1,15 +1,17 @@
 import helmet from 'helmet';
 import { config } from '../config/index.js';
+import { externalMediaOrigin } from '../services/mediaUrls.js';
 import { originMatchesHost } from '../utils/http.js';
 import { renderError } from './errors.js';
 
 /** Security headers, including a Content Security Policy that fits the video player. */
 export function securityHeaders() {
+  const videoOrigin = externalMediaOrigin();
   return helmet({
     contentSecurityPolicy: {
       directives: {
-        // The player downloads video from the media server, which is on another port.
-        connectSrc: ["'self'", (req, res) => res.locals.mediaOrigin],
+        // Video comes from this site (relayed), or from MEDIA_PUBLIC_URL when that is set.
+        connectSrc: ["'self'", ...(videoOrigin ? [videoOrigin] : [])],
         // mpegts.js plays video through a blob: URL (Media Source Extensions).
         mediaSrc: ["'self'", 'blob:'],
         imgSrc: ["'self'", 'data:'],
@@ -17,6 +19,12 @@ export function securityHeaders() {
         upgradeInsecureRequests: config.isProduction ? [] : null,
       },
     },
+    // In development, HSTS would make browsers insist on https for localhost.
+    strictTransportSecurity: config.isProduction,
+    // "same-origin" keeps the Origin header on our own form posts, which the
+    // CSRF check below needs in browsers that do not send Sec-Fetch-Site.
+    // ("no-referrer" would turn it into "null".) Other sites get no referrer.
+    referrerPolicy: { policy: 'same-origin' },
   });
 }
 

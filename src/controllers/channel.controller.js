@@ -24,7 +24,7 @@ export async function show(req, res, next) {
     isOwner,
     isFollowing,
     viewerCount: getViewerCount(username),
-    playbackUrl: playbackUrl(req, username),
+    playbackUrl: playbackUrl(username),
   });
 }
 

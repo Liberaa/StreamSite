@@ -7,6 +7,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/', dashboard.show);
+router.get('/broadcast', dashboard.showBroadcast);
 router.post('/stream', dashboard.updateStream);
 router.post('/profile', dashboard.updateProfile);
 router.post('/stream-key', dashboard.resetStreamKey);

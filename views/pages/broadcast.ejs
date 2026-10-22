@@ -1,0 +1,67 @@
+<%- include('../partials/head', { mainClass: 'page page--narrow' }) %>
+
+<div class="broadcast" data-broadcast data-channel="<%= user.username %>"
+     style="--accent: <%= user.accentColor %>; --on-accent: <%= onAccent(user.accentColor) %>">
+  <header class="broadcast__header">
+    <div class="broadcast__heading">
+      <p class="eyebrow">Go live from this device</p>
+      <h1><%= user.stream.title || 'Untitled stream' %></h1>
+      <p class="broadcast__meta">
+        <span class="chip"><%= categoryName(user.stream.category) %></span>
+        <a href="/dashboard">Edit title and category</a>
+      </p>
+    </div>
+    <a class="btn btn--secondary btn--small" href="/<%= user.username %>">View my channel</a>
+  </header>
+
+  <% if (!available) { %>
+    <p class="form-error" role="alert">Browser streaming is turned off on this server because ffmpeg is missing. You can still stream with OBS or a phone app.</p>
+  <% } %>
+
+  <div class="broadcast__stage">
+    <video class="broadcast__preview" data-preview autoplay muted playsinline></video>
+    <p class="broadcast__placeholder" data-placeholder>Your camera is off</p>
+    <div class="broadcast__overlay">
+      <span class="badge badge--live" data-live-badge hidden>Live</span>
+      <span class="broadcast__viewers" data-viewers-wrap hidden><span data-viewers><%= viewerCount %></span> watching</span>
+    </div>
+  </div>
+  <canvas class="broadcast__canvas" data-canvas width="1280" height="720" aria-hidden="true"></canvas>
+
+  <p class="broadcast__status" data-status role="status">Turn on your camera to get started.</p>
+
+  <div class="broadcast__controls">
+    <button class="btn btn--primary btn--large" type="button" data-action="camera" <%= available ? '' : 'disabled' %>>Turn on camera</button>
+    <button class="btn btn--live btn--large" type="button" data-action="live" hidden>Go live</button>
+    <button class="btn btn--secondary" type="button" data-action="flip" hidden>Flip camera</button>
+    <button class="btn btn--secondary" type="button" data-action="mute" aria-pressed="false" hidden>Mute mic</button>
+    <label class="broadcast__quality">
+      <span>Quality</span>
+      <select data-quality>
+        <option value="hd">HD 720p</option>
+        <option value="sd">SD 480p, for slow connections</option>
+      </select>
+    </label>
+  </div>
+
+  <section class="card broadcast__help" data-secure-help hidden>
+    <h2>The camera needs a secure connection</h2>
+    <p>Browsers only allow the camera on https pages, or on localhost on the computer itself.</p>
+    <% if (phoneSiteUrl) { %>
+      <p>On a phone on the same Wi-Fi, open <strong><%= phoneSiteUrl %>/dashboard/broadcast</strong> and accept the certificate warning once.</p>
+    <% } else { %>
+      <p>Open this page over https. On a live server, that is set up with your domain's certificate.</p>
+    <% } %>
+  </section>
+
+  <section class="card broadcast__tips">
+    <h2>Tips for streaming from a phone</h2>
+    <ul>
+      <li>Keep this page open and the screen on while you are live. Locking the phone pauses the camera.</li>
+      <li>Use Wi-Fi when you can, or pick SD quality on mobile data.</li>
+      <li>Prefer an app? Larix Broadcaster (free for iPhone and Android) works too. The server and stream key are on your <a href="/dashboard">dashboard</a>.</li>
+    </ul>
+  </section>
+</div>
+
+<%- include('../partials/foot', { scripts: ['/vendor/socket.io/socket.io.min.js', '/js/broadcast.js'] }) %>

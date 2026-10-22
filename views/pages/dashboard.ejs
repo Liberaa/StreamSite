@@ -7,13 +7,16 @@
       <p class="eyebrow">Creator dashboard</p>
       <h1>Hi, <%= user.displayName %></h1>
     </div>
-    <a class="btn btn--secondary" href="/<%= user.username %>">View my channel</a>
+    <div class="dashboard__actions">
+      <a class="btn btn--primary" href="/dashboard/broadcast">Go live with camera</a>
+      <a class="btn btn--secondary" href="/<%= user.username %>">View my channel</a>
+    </div>
   </header>
 
   <section class="card status-card" data-dashboard-status data-channel="<%= user.username %>" data-live="<%= live ? 'true' : 'false' %>">
     <div class="status-card__state">
       <span class="status-pill" data-status-pill><%= live ? 'Live' : 'Offline' %></span>
-      <p data-status-text><%= live ? 'You are live. Viewers can watch you right now.' : 'You are offline. Start streaming in OBS to go live.' %></p>
+      <p data-status-text><%= live ? 'You are live. Viewers can watch you right now.' : 'You are offline. Go live with your camera, OBS or a phone app.' %></p>
     </div>
     <dl class="status-card__stats">
       <div><dt>Viewers</dt><dd data-viewers><%= viewerCount %></dd></div>
@@ -45,6 +48,27 @@
             data-confirm="Create a new stream key? The current key stops working right away and a running stream will end.">
         <button class="btn btn--danger btn--small" type="submit">Reset stream key</button>
       </form>
+      <details class="tips" open>
+        <summary>Streaming from a phone</summary>
+        <p class="tips__text">No app needed: open <a href="/dashboard/broadcast">Go live with camera</a> on your phone and stream from the browser.<% if (phoneSiteUrl) { %> On the same Wi-Fi, your phone reaches this computer at <strong><%= phoneSiteUrl %></strong>. Accept the certificate warning once.<% } %></p>
+        <p class="tips__text">Prefer an app? Larix Broadcaster (free for iPhone and Android) and similar RTMP apps work with these:</p>
+        <div class="field">
+          <label for="phone-ingest-url">Server for phone apps</label>
+          <div class="input-row">
+            <input id="phone-ingest-url" value="<%= phoneIngestUrl %>" readonly>
+            <button class="btn btn--secondary" type="button" data-copy="phone-ingest-url">Copy</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="phone-full-url">Full URL, for apps with a single field</label>
+          <div class="input-row">
+            <input id="phone-full-url" type="password" value="<%= `${phoneIngestUrl}/${obsStreamKey}` %>" readonly autocomplete="off" spellcheck="false">
+            <button class="btn btn--secondary" type="button" data-reveal="phone-full-url">Show</button>
+            <button class="btn btn--secondary" type="button" data-copy="phone-full-url">Copy</button>
+          </div>
+          <p class="field__hint">This contains your stream key, so keep it secret too.</p>
+        </div>
+      </details>
       <details class="tips">
         <summary>Recommended OBS settings</summary>
         <ul>
@@ -109,4 +133,4 @@
   </div>
 </div>
 
-<%- include('../partials/foot', { scripts: ['/socket.io/socket.io.js', '/js/dashboard.js'] }) %>
+<%- include('../partials/foot', { scripts: ['/vendor/socket.io/socket.io.min.js', '/js/dashboard.js'] }) %>
